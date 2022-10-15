@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.crmstudy.mapper.workbench.activity.ActivityMapper">
+    <insert id="saveCreateActivity" parameterType="com.crmstudy.domain.Activity">
+        insert into
+            tbl_activity(id,owner,name,start_date,end_date,cost,description,create_time,create_by)
+        value
+            (#{id},#{owner},#{name},#{start_date},#{end_date},#{cost},#{description},#{create_time},#{create_by})
+    </insert>
+
+    <select id="selectAllActivity" resultType="com.crmstudy.domain.Activity">
+        select id,name,owner,start_date,end_date from tbl_activity
+    </select>
+
+</mapper>

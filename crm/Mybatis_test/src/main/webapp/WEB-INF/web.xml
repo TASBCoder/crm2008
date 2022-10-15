@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="2.5"
+         xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+
+  <context-param>
+    <param-name>contextConfigLocation</param-name>
+    <param-value>classpath:applicationContext-Service.xml</param-value>
+  </context-param>
+  <listener>
+    <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+  </listener>
+
+  <filter>
+    <filter-name>encodingFilter</filter-name>
+    <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+    <init-param>
+      <param-name>encoding</param-name>
+      <param-value>UTF-8</param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>encodingFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <!--配置登录验证的过滤器-->
+<!--  <filter>-->
+<!--    <filter-name>loginFilter</filter-name>-->
+<!--    <filter-class>com.crmstudy.controller.web.filter.LoginFilter</filter-class>-->
+<!--    <init-param>-->
+<!--      <param-name>excludedPages</param-name>-->
+<!--      <param-value>/settings/qx/user/toLogin,/settings/qx/user/toIndex,/crm/settings/qx/user/toIndex</param-value>-->
+<!--    </init-param>-->
+<!--  </filter>-->
+<!--  <filter-mapping>-->
+<!--    <filter-name>loginFilter</filter-name>-->
+<!--    <url-pattern>/settings/*</url-pattern>-->
+<!--  </filter-mapping>-->
+<!--  <filter-mapping>-->
+<!--    <filter-name>loginFilter</filter-name>-->
+<!--    <url-pattern>/workbench/*</url-pattern>-->
+<!--  </filter-mapping>-->
+
+
+  <servlet>
+    <servlet-name>springmvc</servlet-name>
+    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+    <init-param>
+      <param-name>contextConfigLocation</param-name>
+      <param-value>classpath:applicationContext-Controller.xml</param-value>
+    </init-param>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>springmvc</servlet-name>
+    <url-pattern>/</url-pattern>
+  </servlet-mapping>
+
+  <!--欢迎页面-->
+  <welcome-file-list>
+    <welcome-file>/</welcome-file>
+  </welcome-file-list>
+
+</web-app>

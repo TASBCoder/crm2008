@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        https://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+    <!--开启注解驱动[可省略]-->
+    <mvc:annotation-driven/>
+
+    <!-- 访问静态资源 -->
+    <mvc:default-servlet-handler/>
+
+    <!--扫描Controller包下的类-->
+    <context:component-scan base-package="com.crmstudy.controller.settings.qx.user"/>
+    <context:component-scan base-package="com.crmstudy.controller.web.controller"/>
+    <context:component-scan base-package="com.crmstudy.controller.workbench"/>
+
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/settings/**"/>
+            <mvc:mapping path="/workbench/**"/>
+            <mvc:exclude-mapping path="/settings/qx/user/toIndex"/>
+            <mvc:exclude-mapping path="/settings/qx/user/toLogin"/>
+            <bean class="com.crmstudy.controller.web.filter.LoginInterceptor"/>
+        </mvc:interceptor>
+    </mvc:interceptors>
+
+    <bean id="beanNameUrlHandlerMapping" class="org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping"/>
+
+    <!--配置视图解析器-->
+    <bean id="internalResourceViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/pages/"/>
+        <property name="suffix" value=".jsp"/>
+    </bean>
+
+    <import resource="classpath:applicationContext-Service.xml"/>
+
+</beans>
