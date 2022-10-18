@@ -11,8 +11,51 @@
             (#{id},#{owner},#{name},#{start_date},#{end_date},#{cost},#{description},#{create_time},#{create_by})
     </insert>
 
-    <select id="selectAllActivity" resultType="com.crmstudy.domain.Activity">
-        select id,name,owner,start_date,end_date from tbl_activity
+    <select id="selectActivityByConditionForPage" parameterType="map" resultType="com.crmstudy.domain.Activity">
+        select a.id, a.name, u1.name as owner, a.start_date, a.end_date, a.cost, a.description,
+               a.create_time, u2.name as create_by, a.edit_time, u3.name as edit_by
+        from tbl_activity a
+        inner join tbl_user u1 on a.owner = u1.id
+        inner join tbl_user u2 on a.create_by = u2.id
+        left join tbl_user u3 on a.edit_by = u3.id
+        <where>
+            <if test="name != null and name != ''">
+                and a.name like concat("%",#{name},"%")
+            </if>
+            <if test="owner != null and owner != ''">
+                and a.owner like concat("%",#{owner},"%")
+            </if>
+            <if test="start_date != null and start_date != ''">
+                and a.start_date &gt;= #{start_date}
+            </if>
+            <if test="end_date != null and end_date != ''">
+                and a.end_date &lt;= #{end_date}
+            </if>
+        </where>
+        order by a.create_time desc
+        limit #{pageNo}, #{pageSize}
+    </select>
+
+    <select id="selectActivityByCondition" parameterType="map" resultType="int">
+        select count(*)
+        from tbl_activity a
+        inner join tbl_user u1 on a.owner = u1.id
+        inner join tbl_user u2 on a.create_by = u2.id
+        left join tbl_user u3 on a.edit_by = u3.id
+        <where>
+            <if test="name != null and name != ''">
+                and a.name like concat("%",#{name},"%")
+            </if>
+            <if test="owner != null and owner != ''">
+                and a.owner like concat("%",#{owner},"%")
+            </if>
+            <if test="start_date != null and start_date != ''">
+                and a.start_date &gt;= #{start_date}
+            </if>
+            <if test="end_date != null and end_date != ''">
+                and a.end_date &lt;= #{end_date}
+            </if>
+        </where>
     </select>
 
 </mapper>

@@ -1,12 +1,11 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" isELIgnored="false" %>
 <%@ page import="com.crmstudy.commons.constans.Constant" %>
 <%@ page import="com.crmstudy.domain.User" %>
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%
 	String base =request.getScheme()+"://"+request.getServerName()+":"
 			+request.getServerPort()+request.getContextPath()+"/";
 
-	Object obj = session.getAttribute(Constant.SESSION_USER);
-	User user = (User)obj;
+	User user = (User)session.getAttribute(Constant.SESSION_USER);
 	String loginAct = user.getLogin_act();
 	String name = user.getName();
 	String deptno = user.getDeptno();
