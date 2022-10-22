@@ -11,6 +11,9 @@
             (#{id},#{owner},#{name},#{start_date},#{end_date},#{cost},#{description},#{create_time},#{create_by})
     </insert>
 
+<!--    关于将if语句中的and owner like concat("%",#{owner},"%")改为and u1.name like concat("%",#{owner},"%")说明
+        在select语句中，on子句的执行顺序是在select子句之前执行的，改之前的语句MySQL引擎在调用on子句时会找不到owner是那个表的字段从而导致查询失败
+        改之后，因为u1.user本质是就是owner，不会使用-->
     <select id="selectActivityByConditionForPage" parameterType="map" resultType="com.crmstudy.domain.Activity">
         select a.id, a.name, u1.name as owner, a.start_date, a.end_date, a.cost, a.description,
                a.create_time, u2.name as create_by, a.edit_time, u3.name as edit_by
@@ -23,7 +26,7 @@
                 and a.name like concat("%",#{name},"%")
             </if>
             <if test="owner != null and owner != ''">
-                and a.owner like concat("%",#{owner},"%")
+                and u1.name like concat("%",#{owner},"%")
             </if>
             <if test="start_date != null and start_date != ''">
                 and a.start_date &gt;= #{start_date}
@@ -47,7 +50,7 @@
                 and a.name like concat("%",#{name},"%")
             </if>
             <if test="owner != null and owner != ''">
-                and a.owner like concat("%",#{owner},"%")
+                and u1.name like concat("%",#{owner},"%")
             </if>
             <if test="start_date != null and start_date != ''">
                 and a.start_date &gt;= #{start_date}
@@ -58,4 +61,19 @@
         </where>
     </select>
 
+    <delete id="deleteActivity" parameterType="string">
+        delete from tbl_activity where id in
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="selectActivityById" parameterType="string" resultType="com.crmstudy.domain.Activity">
+        select * from tbl_activity where id = #{id}
+    </select>
+
+    <update id="updateActivity" parameterType="com.crmstudy.domain.Activity">
+        update tbl_activity set owner=#{owner}, name=#{name}, start_date=#{start_date}, end_date=#{end_date},
+                                cost=#{cost}, description=#{description}, edit_time=#{edit_time}, edit_by=#{edit_by} where id = #{id};
+    </update>
 </mapper>

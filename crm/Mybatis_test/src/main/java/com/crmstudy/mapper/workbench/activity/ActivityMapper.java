@@ -9,4 +9,7 @@ public interface ActivityMapper {
     int saveCreateActivity(Activity activity);
     List<Activity> selectActivityByConditionForPage(Map map);
     int selectActivityByCondition(Map map);
+    int deleteActivity(String[] id);
+    Activity selectActivityById(String id);
+    int updateActivity(Activity activity);
 }

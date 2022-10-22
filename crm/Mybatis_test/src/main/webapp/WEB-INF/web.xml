@@ -13,6 +13,10 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
     <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
   </listener>
 
+<!--  <listener>-->
+<!--    <listener-class>com.crmstudy.controller.web.filter.LoginListener</listener-class>-->
+<!--  </listener>-->
+
   <filter>
     <filter-name>encodingFilter</filter-name>
     <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>

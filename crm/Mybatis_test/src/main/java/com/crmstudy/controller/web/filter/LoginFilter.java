@@ -28,30 +28,13 @@ public class LoginFilter implements Filter {
 
         //不拦截 /settings/qx/user/toLogin 和 /settings/qx/user/toIndex
         for (String page : excludedPages) {
-            System.out.println(excludedPages[1]);
-            System.out.println(excludedPages[0]);
-            System.out.println("执行到这里了"+ servletPath);
-            System.out.println("此时的page是："+ page);
-            if(page.equals(servletPath)){
-                System.out.println("这个登录路径 = "+ servletPath + "过去了");
+            //如果请求的路径是[/settings/qx/user/toLogin,/settings/qx/user/toIndex]或者是正常登录的话就放行
+            if((page.equals(servletPath)) || (session != null & session.getAttribute(Constant.SESSION_USER) != null)){
                 filterChain.doFilter(request,response);
-                break;
             }else{
-                //登录验证，判断是否属于正常登录
-                if(session != null & session.getAttribute(Constant.SESSION_USER) != null){
-                    System.out.println("我在获取session");
-                    //正常登录
-                    filterChain.doFilter(request,response);
-                }else{
-                    //重定向到登录页面
-                    System.out.println("我没有获取到session");
-                    response.sendRedirect(request.getContextPath());
-                }
+                response.sendRedirect(request.getContextPath());
             }
-
         }
-
-
     }
 
     @Override

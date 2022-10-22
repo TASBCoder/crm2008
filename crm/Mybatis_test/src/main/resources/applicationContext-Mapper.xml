@@ -27,4 +27,5 @@
         <!--要扫描的dao包-->
         <property name="basePackage" value="com.crmstudy.mapper.settings.qx.user,com.crmstudy.mapper.workbench.activity"/>
     </bean>
+
 </beans>

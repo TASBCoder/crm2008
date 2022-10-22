@@ -3,6 +3,7 @@
 <%
 	String base = request.getScheme()+"://"+request.getServerName()+":"
 			+request.getServerPort()+request.getContextPath()+"/";
+	System.out.println("index.jspd的base ： " + base);
 %>
 <!DOCTYPE html>
 <html>
@@ -29,9 +30,11 @@
 <script type="text/javascript" src="jquery/bs_pagination-master/localization/en.js"></script>
 
 <script type="text/javascript">
-	//入口函数，当页面加载完成时执行
+	//入口函数，当页面中所有元素都加载完成后执行
 	$(function(){
-		//给创建按钮添加弹出模态窗口的事件
+
+		//创建市场活动
+		//1. 给创建按钮添加弹出模态窗口的事件
 		$("#createActivityBtn").click(function () {
 
 			//弹出模态窗口前重置表单（情空表单数据）
@@ -41,8 +44,7 @@
 			//弹出创建市场活动的模态窗口
 			$("#createActivityModal").modal("show");
 		})
-
-		//给保存按钮添加单机事件
+		//2. 给保存按钮添加单机事件
 		$("#saveActivityBtn").click(function () {
 			//收集创建市场的表单数据
 			let owner = $("#create-marketActivityOwner").val();
@@ -52,59 +54,39 @@
 			let cost = $.trim($("#create-cost").val());
 			let description = $.trim($("#create-describe").val());
 
-			//判断创建市场的表单中的所有者和名称是否填写
-			if(owner == ""){
-				alert("所有者不能为空")
-			}
-			if(name == ""){
-				alert("名称不能为空")
-			}
-			if(start_date != "" && end_date != ""){
-				//使用字符串的大小代替日期的大小
-				if(end_date < start_date){
-					alert("结束日期必须大于开始日期");
-					return;
-				}
-			}
-			//使用正则表达式验证cost是否是非负整数
-			/*语法通则：
-				1. //：在js中定义一个正则表达式。
-				2. ^：匹配字符串的开头位置
-				   $: 匹配字符串的结尾
-				3. []：匹配指定字符集中的一位字符
-			*/
-			let regExp = /^(([1-9]\d*)|0)$/;
-			if(!regExp.test(cost)){
-				alert("成本只能是非负整数");
-				return;
-			}
+			//表单数据校验
+			//表单数据错误返回0，数据正确返回1
+			let returnInt = formDataVerification(owner, name, start_date, end_date, cost);
 
-			//异步请求将表单数据返回到Controller
-			$.ajax({
-				url: "workbench/activity/saveCreateActivity",
-				data: {
-					//此处返回后台的字符名必须与Activity的属性名一致，否则后台不能接收到数据
-					owner: owner,
-					name: name,
-					start_date: start_date,
-					end_date: end_date,
-					cost: cost,
-					description: description
-				},
-				type: "post",
-				success: function (data){
-					if(data.code == "1"){
-						//关闭模态窗口
-						//$("#createActivityModal").modal("hide");
-						$("#closeBtn").click();
+			//返回1，才发送异步请求
+			if(returnInt == 1){
+				//异步请求将表单数据返回到Controller
+				$.ajax({
+					url: "workbench/activity/saveCreateActivity",
+					data: {
+						//此处返回后台的字符名必须与Activity的属性名一致，否则后台不能接收到数据
+						owner: owner,
+						name: name,
+						start_date: start_date,
+						end_date: end_date,
+						cost: cost,
+						description: description
+					},
+					type: "post",
+					success: function (data){
+						if(data.code == "1"){
+							//关闭模态窗口
+							//$("#createActivityModal").modal("hide");
+							$("#closeBtn").click();
 
-						//刷新市场活动列，显示第一页数据，保持每页显示条数不变
-					}else{
-						alert(data.message);
+							//刷新市场活动列，显示第一页数据，保持每页显示条数不变
+							selectActivityByConditionForPage(1,$("#pagination_Div").bs_pagination("getOption", "rowsPerPage"));
+						}else{
+							alert(data.message);
+						}
 					}
-				}
-			});
-
+				});
+			}
 		})
 
 		//当页面加载完成时，对开始日期调用日历的工具函数
@@ -118,22 +100,216 @@
 			autoclose: 1,		//设置选择完日期或时间之后，日历是否自动关闭
 			todayBtn: 1,		//设置是否显示”今天“的日期按钮
 			todayHighlight: 1,	//今天日期按钮显示高亮
-			clearBtn: 1
+			clearBtn: 1		//是否有情况日期的按钮
 		});
-
-		//按键监听，按下删除键，就将已选择好的日期删除
 
 		//市场活动主页面加载完成之后，展示所有的数据
 		selectActivityByConditionForPage(1,10);
 
 		//单击查询按钮后刷新展示的数据
+		//$("#pagination_Div").bs_pagination("getOption", "rowsPerPage")     获取上次查询时，页面显示的条数信息
 		$("#selectConditionBtn").click(function () {
-			selectActivityByConditionForPage(1,10);
+			selectActivityByConditionForPage(1,$("#pagination_Div").bs_pagination("getOption", "rowsPerPage"));
+		});
+
+		//全选按钮单击事件
+		$("#checkAll").click(function (){
+			//this代表当前按钮
+			// if(this.checked){
+			// 	//获取tBoby下的所有input中类型为checkbox的标签。prop是设置checked的选中状态
+			// 	$("#tBody input[type='checkedbox']").prop("checked",true);
+			// }else{
+			// 	$("#tBody input[type='checkedbox']").prop("checked",true);
+			// }
+
+			//设置tBoby下的所有input中类型为checkbox的标签的选中状态与全选按钮的状态一致
+			$("#tBody input[type='checkbox']").prop("checked",this.checked);
+		})
+
+		/*如果列表中的所有checkbox选中，则全选按钮也选中，列表中只要有一个checkbox没被选中，则全选按钮不选中
+		使用jQuery对象：“选择器.xxxx()”来给元素添加事件，这种添加方式存在局限性，只能给固有元素添加事件，不能给动态元素添加事件
+		$("#tBody input[type='checkbox']").click(function () {
+			//获取列表中所有checkbox的个数
+			let allCheckBoxSize = $("#tBody input[type='checkbox']").size();
+			//获取列表中所有被选中checkbox的个数
+			let allCheckBoxCheckedSize =  $("#tBody input[type='checkbox']:checked").size();
+			//当所有checkbox的个数 等于 所有被选中checkbox的个数时，表示所有的checkbox都被选中了，全选按钮为选中状态
+			if(allCheckBoxSize == allCheckBoxCheckedSize){
+				//将全选按钮设置为选中状态
+				$("#checkAll").prop("checked", true)
+			}else{
+				//否则将全选按钮设置为没选中状态
+				$("#checkAll").prop("checked", false)
+			}
+		})*/
+
+		//使用jQuery的on函数：父选择器.on("事件类型", 子选择器, function(){})。这种可以给固有元素添加事件，也可以给动态元素添加事件。
+		$("#tBody").on("click", $("input[type='checkbox']"), function () {
+			//获取列表中所有checkbox的个数
+			let allCheckBoxSize = $("#tBody input[type='checkbox']").size();
+			//获取列表中所有被选中checkbox的个数
+			let allCheckBoxCheckedSize =  $("#tBody input[type='checkbox']:checked").size();
+			//当所有checkbox的个数 等于 所有被选中checkbox的个数时，表示所有的checkbox都被选中了，全选按钮为选中状态
+			if(allCheckBoxSize == allCheckBoxCheckedSize){
+				//将全选按钮设置为选中状态
+				$("#checkAll").prop("checked", true)
+			}else{
+				//否则将全选按钮设置为没选中状态
+				$("#checkAll").prop("checked", false)
+			}
+		})
+
+		//给删除按钮添加事件
+		$("#deleteBtn").click(function () {
+			//判断是否选中数据
+			//如果列表所有被选中的单选框的长度为0的话，代表没有数据被选中
+			if($("tBody input[type='checkbox']:checked").size() == 0){
+				//没有数据被选中弹出提示
+				alert("亲，你还没有选中要删除的数据哦!");
+				return;
+			}
+			//获取所有被选中的单选框，形成一个单选框数组
+			let checkedBox = $("tBody input[type='checkbox']:checked");
+			//创建一个string
+			let ids = "";
+			//遍历单选框数组，取出其中的id
+			$.each(checkedBox, function (index, obj) {
+				ids += "id=" + obj.value + "&";
+			})
+			ids = ids.substr(0,ids.length-1)
+			alert(ids)
+
+			//有元素被选中，发异步请求
+			$.ajax({
+				url: "workbench/activity/deleteActivity",
+				data: ids,
+				type: "post",
+				//删除成功，重新获取数据，刷新页面
+				success: function (data){
+					alert("返回到前端的数据：" + data);
+					if(data.code == "1"){
+						selectActivityByConditionForPage(1,$("#pagination_Div").bs_pagination("getOption", "rowsPerPage"));
+					}else{
+						alert(data.message);
+					}
+				}
+			})
+		})
+
+		//修改市场活动
+		//1. 点击修改按钮，触发事件
+		$("#modifyActivityBtn").click(function () {
+			//判断是否选择有修改的数据
+			let checkedBox = $("tBody input[type = 'checkbox']:checked");
+			if(checkedBox.size() == 0){
+				alert("亲，你还没有选中要修改的数据哦!");
+				return;
+			}else if(checkedBox.size() > 1) {
+				alert("亲，一次只能选中一条要修改的数据哦!");
+				return;
+			}
+
+			//根据id查询发送异步请求，将查询出来的数据展示到修改表单
+			let id = checkedBox[0].value;
+			$.ajax({
+				url: "workbench/activity/selectActivityById",
+				data: {
+					id: id,
+				},
+				type: "post",
+				success: function (data) {
+					$("#edit-marketActivityOwner").val(data.owner)
+					$("#edit-marketActivityName").val(data.name);
+					$("#edit-startTime").val(data.start_date);
+					$("#edit-endTime").val(data.end_date);
+					$("#edit-cost").val(data.cost);
+					$("#edit-describe").html(data.description);
+				}
+			})
+
+			//弹出模态窗口
+			$("#editActivityModal").modal("show");
+		})
+		//2. 点击更新按钮，触发事件
+		$("#updateActivityBtn").click(function (){
+			//收集更新后的数据
+			let checkedBoxId = $("tBody input[type = 'checkbox']:checked")[0].value;
+			let owner = $("#edit-marketActivityOwner").val();
+			let name = $.trim($("#edit-marketActivityName").val());
+			let start_date = $("#edit-startTime").val();
+			let end_date = $("#edit-endTime").val();
+			let cost = $.trim($("#edit-cost").val());
+			let description = $.trim($("#edit-describe").val());
+
+			//表单数据校验
+			let returnInt = formDataVerification(owner, name, start_date, end_date, cost);
+
+			//数据校验成功，发送异步请求
+			if(returnInt == 1){
+				$.ajax({
+					url: "workbench/activity/updateActivity",
+					data: {
+						//此处返回后台的字符名必须与Activity的属性名一致，否则后台不能接收到数据
+						id: checkedBoxId,
+						owner: owner,
+						name: name,
+						start_date: start_date,
+						end_date: end_date,
+						cost: cost,
+						description: description
+					},
+					type: "post",
+					success: function (data){
+						if(data.code == "1"){
+							//关闭模态窗口
+							$("#createActivityModal").modal("hide");
+
+							//刷新市场活动列，显示第一页数据，保持每页显示条数不变
+							selectActivityByConditionForPage(1,$("#pagination_Div").bs_pagination("getOption", "rowsPerPage"));
+						}else{
+							alert(data.message);
+						}
+					}
+				})
+			}
 		})
 
 	});
 
 	//封装函数
+	//表单数据校验函数
+	function formDataVerification(owner, name, start_date, end_date, cost){
+		//判断创建市场的表单中的所有者和名称是否填写
+		if(owner == ""){
+			alert("所有者不能为空")
+			return 0;
+		}
+		if(name == ""){
+			alert("名称不能为空")
+			return 0;
+		}
+		if(start_date != "" && end_date != ""){
+			//使用字符串的大小代替日期的大小
+			if(end_date < start_date){
+				alert("结束日期必须大于开始日期");
+				return 0;
+			}
+		}
+		//使用正则表达式验证cost是否是非负整数
+		/*语法通则：
+            1. //：在js中定义一个正则表达式。
+            2. ^：匹配字符串的开头位置
+               $: 匹配字符串的结尾
+            3. []：匹配指定字符集中的一位字符
+        */
+		let regExp = /^(([1-9]\d*)|0)$/;
+		if(!regExp.test(cost)){
+			alert("成本只能是非负整数");
+			return 0;
+		}
+		return 1;
+	}
+	//分页函数
 	function selectActivityByConditionForPage(pageNo, pageSize) {
 		//收集参数
 		let name = $("#query_name").val();
@@ -156,6 +332,7 @@
 			},
 			type: "post",
 			success: function (data){
+				//分页插件的开始函数
 				$("#pagination_Div").bs_pagination({
 					currentPage: pageNo,	//当前页号
 					rowsPerPage: pageSize,	//每页显示的条数
@@ -168,6 +345,7 @@
 					showRowsPerPage: true,	//是否显示“记录每页显示条数”部分
 					showRowsInfo: true,	//是否显示记录的信息
 
+					//当页号，每页显示条数发生改变就会调用该方法
 					onChangePage: function (event, pageObj){
 						selectActivityByConditionForPage(pageObj.currentPage, pageObj.rowsPerPage);
 					}
@@ -178,7 +356,7 @@
 				let htmlStr = "";
 				$.each(data.queryActivityList, function (index, obj) {
 					htmlStr+='<tr class="active">'
-					htmlStr+='	<td><input type="checkbox" value='+ obj.id +'/></td>'
+					htmlStr+='	<td><input type="checkbox" value='+ obj.id +'></td>'
 					htmlStr+='	<td><a style="text-decoration: none; cursor: pointer;" onclick="window.location.href=\'detail.html\';">'+ obj.name +'</a></td>'
 					htmlStr+='	<td>'+ obj.owner +'</td>'
 					htmlStr+='	<td>'+ obj.start_date+'</td>'
@@ -186,9 +364,13 @@
 					htmlStr+='</tr>'
 				})
 				$("#tBody").html(htmlStr);
+
+				//每次页面发送异步请请都将全选框设置为不选中状态
+				$("#checkAll").prop("checked", false)
 			}
 		})
 	}
+
 </script>
 </head>
 <body>
@@ -289,11 +471,11 @@
 						<div class="form-group">
 							<label for="edit-startTime" class="col-sm-2 control-label">开始日期</label>
 							<div class="col-sm-10" style="width: 300px;">
-								<input type="text" class="form-control" id="edit-startTime" value="2020-10-10">
+								<input type="text" class="form-control dateTime" id="edit-startTime" value="2020-10-10">
 							</div>
 							<label for="edit-endTime" class="col-sm-2 control-label">结束日期</label>
 							<div class="col-sm-10" style="width: 300px;">
-								<input type="text" class="form-control" id="edit-endTime" value="2020-10-20">
+								<input type="text" class="form-control dateTime" id="edit-endTime" value="2020-10-20">
 							</div>
 						</div>
 
@@ -316,7 +498,7 @@
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
-					<button type="button" class="btn btn-primary" data-dismiss="modal">更新</button>
+					<button type="button" class="btn btn-primary" id="updateActivityBtn" data-dismiss="modal">更新</button>
 				</div>
 			</div>
 		</div>
@@ -409,8 +591,8 @@
 			<div class="btn-toolbar" role="toolbar" style="background-color: #F7F7F7; height: 50px; position: relative;top: 5px;">
 				<div class="btn-group" style="position: relative; top: 18%;">
 				  <button type="button" class="btn btn-primary" id="createActivityBtn" data-target="#createActivityModal"><span class="glyphicon glyphicon-plus"></span> 创建</button>
-				  <button type="button" class="btn btn-default" data-toggle="modal" data-target="#editActivityModal"><span class="glyphicon glyphicon-pencil"></span> 修改</button>
-				  <button type="button" class="btn btn-danger"><span class="glyphicon glyphicon-minus"></span> 删除</button>
+				  <button type="button" class="btn btn-default" id="modifyActivityBtn" data-target="#editActivityModal"><span class="glyphicon glyphicon-pencil"></span> 修改</button>
+				  <button type="button" class="btn btn-danger" id="deleteBtn"><span class="glyphicon glyphicon-minus"></span> 删除</button>
 				</div>
 				<div class="btn-group" style="position: relative; top: 18%;">
                     <button type="button" class="btn btn-default" data-toggle="modal" data-target="#importActivityModal" ><span class="glyphicon glyphicon-import"></span> 上传列表数据（导入）</button>
@@ -422,7 +604,7 @@
 				<table class="table table-hover">
 					<thead>
 						<tr style="color: #B3B3B3;">
-							<td><input type="checkbox" /></td>
+							<td><input type="checkbox" id="checkAll"/></td>
 							<td>名称</td>
                             <td>所有者</td>
 							<td>开始日期</td>
