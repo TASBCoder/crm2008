@@ -1,13 +1,10 @@
 package com.crmstudy.service.workbench.activity.impl;
 
-import com.crmstudy.commons.utills.DateUtils;
 import com.crmstudy.domain.Activity;
 import com.crmstudy.mapper.workbench.activity.ActivityMapper;
 import com.crmstudy.service.workbench.activity.ActivityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.Date;
 import java.util.Map;
 import java.util.List;
 
@@ -45,5 +42,10 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public int updateActivity(Activity activity) {
         return mapper.updateActivity(activity);
+    }
+
+    @Override
+    public List<Activity> findAllActivity() {
+        return mapper.findAllActivity();
     }
 }

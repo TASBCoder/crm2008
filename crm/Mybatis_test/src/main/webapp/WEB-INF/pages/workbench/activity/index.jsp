@@ -274,6 +274,12 @@
 			}
 		})
 
+		//批量导出市场活动
+		$("#exportActivityAllBtn").click(function () {
+			//文件的下载只能发送同步请求
+			window.location.href = "workbench/activity/exportFindAllActivity";
+		})
+
 	});
 
 	//封装函数

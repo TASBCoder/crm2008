@@ -4,7 +4,7 @@ import com.crmstudy.commons.constans.Constant;
 import com.crmstudy.commons.domain.returnObject;
 import com.crmstudy.commons.utills.DateUtils;
 import com.crmstudy.domain.User;
-import com.crmstudy.service.settings.qx.user.impl.UserServiceImpl;
+import com.crmstudy.service.settings.qx.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,7 +22,7 @@ import java.util.Map;
 public class UserController {
 
     @Autowired
-    private UserServiceImpl service;
+    private UserService service;
 
     @RequestMapping("/settings/qx/user/toLogin")
     public String toLogin(){

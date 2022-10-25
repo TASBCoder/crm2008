@@ -22,7 +22,6 @@
 <!--    <bean name="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">-->
 <!--        <property name="dataSource" ref="datasource"/>-->
 <!--    </bean>-->
-
 <!--    <tx:advice id="txAdvice" transaction-manager="transactionManager">-->
 <!--        <tx:attributes>-->
 <!--            <tx:method name="add*" propagation="REQUIRED" rollback-for="Exception"/>-->
@@ -34,14 +33,12 @@
 <!--            <tx:method name="*" propagation="REQUIRED" read-only="true"/>-->
 <!--        </tx:attributes>-->
 <!--    </tx:advice>-->
-
 <!--    &lt;!&ndash;使用spring的aop将事务织入方法中&ndash;&gt;-->
 <!--    <aop:config>-->
-<!--        <aop:pointcut id="allMethodPointcut" expression="execution(* com.crmstudy.service.settings.qx.user.impl.*(..))"/>-->
+<!--        &lt;!&ndash; 切入点是：com.crmstudy.service包下及其子包下的所有类的所有方法&ndash;&gt;-->
+<!--        <aop:pointcut id="allMethodPointcut" expression="execution(* com.crmstudy.service..*.*(..))"/>-->
 <!--        <aop:advisor advice-ref="txAdvice" pointcut-ref="allMethodPointcut"/>-->
 <!--    </aop:config>-->
-
-
     <import resource="classpath:applicationContext-Mapper.xml"/>
 
 
