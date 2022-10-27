@@ -1,44 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:context="http://www.springframework.org/schema/context"
        xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
        xmlns:tx="http://www.springframework.org/schema/tx"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
-       http://www.springframework.org/schema/beans/spring-beans.xsd
-       http://www.springframework.org/schema/context
-       http://www.springframework.org/schema/context/spring-context.xsd
-       http://www.springframework.org/schema/aop
-       http://www.springframework.org/schema/aop/spring-aop.xsd
-       http://www.springframework.org/schema/tx
-       http://www.springframework.org/schema/tx/spring-tx.xsd">
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd">
 
     <!--开启Spring对注解的支持-->
     <context:annotation-config/>
+<!--    <tx:annotation-driven></tx:annotation-driven>-->
     <context:component-scan base-package="com.crmstudy.service.settings.qx.user,com.crmstudy.service.workbench.activity"/>
 
     <!--配置事务管理器-->
     <!--将事务管理器的对象注入到ioc容器中-->
-<!--    <bean name="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">-->
-<!--        <property name="dataSource" ref="datasource"/>-->
-<!--    </bean>-->
-<!--    <tx:advice id="txAdvice" transaction-manager="transactionManager">-->
-<!--        <tx:attributes>-->
-<!--            <tx:method name="add*" propagation="REQUIRED" rollback-for="Exception"/>-->
-<!--            <tx:method name="save*" propagation="REQUIRED" rollback-for="Exception"/>-->
-<!--            <tx:method name="edit*" propagation="REQUIRED" rollback-for="Exception"/>-->
-<!--            <tx:method name="update*" propagation="REQUIRED" rollback-for="Exception"/>-->
-<!--            <tx:method name="delete*" propagation="REQUIRED" rollback-for="Exception"/>-->
-<!--            <tx:method name="do*" propagation="REQUIRED" rollback-for="Exception"/>-->
-<!--            <tx:method name="*" propagation="REQUIRED" read-only="true"/>-->
-<!--        </tx:attributes>-->
-<!--    </tx:advice>-->
-<!--    &lt;!&ndash;使用spring的aop将事务织入方法中&ndash;&gt;-->
-<!--    <aop:config>-->
-<!--        &lt;!&ndash; 切入点是：com.crmstudy.service包下及其子包下的所有类的所有方法&ndash;&gt;-->
-<!--        <aop:pointcut id="allMethodPointcut" expression="execution(* com.crmstudy.service..*.*(..))"/>-->
-<!--        <aop:advisor advice-ref="txAdvice" pointcut-ref="allMethodPointcut"/>-->
-<!--    </aop:config>-->
+    <bean name="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="datasource"/>
+    </bean>
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="add*" propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="save*" propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="edit*" propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="update*" propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="delete*" propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="insert*" propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="do*" propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="*" propagation="REQUIRED" read-only="true"/>
+        </tx:attributes>
+    </tx:advice>
+    <!--使用spring的aop将事务织入方法中-->
+    <aop:config>
+        <!-- 切入点是：com.crmstudy.service包下及其子包下的所有类的所有方法-->
+        <aop:pointcut id="allMethodPointcut" expression="execution(* com.crmstudy.service..*.*(..))"/>
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="allMethodPointcut"/>
+    </aop:config>
+
     <import resource="classpath:applicationContext-Mapper.xml"/>
 
 

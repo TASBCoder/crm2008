@@ -3,7 +3,6 @@
 <%
 	String base = request.getScheme()+"://"+request.getServerName()+":"
 			+request.getServerPort()+request.getContextPath()+"/";
-	System.out.println("index.jspd的base ： " + base);
 %>
 <!DOCTYPE html>
 <html>
@@ -177,7 +176,6 @@
 				ids += "id=" + obj.value + "&";
 			})
 			ids = ids.substr(0,ids.length-1)
-			alert(ids)
 
 			//有元素被选中，发异步请求
 			$.ajax({
@@ -186,7 +184,6 @@
 				type: "post",
 				//删除成功，重新获取数据，刷新页面
 				success: function (data){
-					alert("返回到前端的数据：" + data);
 					if(data.code == "1"){
 						selectActivityByConditionForPage(1,$("#pagination_Div").bs_pagination("getOption", "rowsPerPage"));
 					}else{
@@ -280,6 +277,74 @@
 			window.location.href = "workbench/activity/exportFindAllActivity";
 		})
 
+		//选择导出市场活动
+		$("#exportActivityXzBtn").click(function () {
+			let checkedBox = $("#tBody input[type='checkbox']:checked");
+			if(checkedBox.size() == 0){
+				alert("亲，请选择你要导出的数据.....");
+				return;
+			}
+			//创建一个string
+			let ids = "";
+			//遍历单选框数组，取出其中的id
+			$.each(checkedBox, function (index, obj) {
+				ids += "id=" + obj.value + "&";
+			})
+			ids = ids.substr(0,ids.length-1);
+			//文件的下载只能发送同步请求
+			window.location.href = "workbench/activity/exportFindActivityById?"+ids;
+		})
+
+		//单击导入列表数据按钮，触发事件
+		$("#uploadActivityBtn").click(function () {
+			//单击导出列表数据，弹出模态窗口
+			$("#importActivityModal").modal("show");
+		})
+		//单击导入，触发事件，发送异步请求
+		$("#importActivityBtn").click(function (){
+			//val()获取到的是文件的名称
+			let activityFileName = $("#activityFile").val();  //C:\fakepath\activityList.xls
+			//截取字符串长度
+			let suffix = activityFileName.substr(activityFileName.length-3);
+			if(suffix != "xls" || suffix.toUpperCase() != "XLS"){
+				alert("操作仅针对Excel，仅支持后缀名为XLS的文件")
+				return;
+			}
+			//文件校验
+			//$("#activityFile")[0]：获取按钮的dom对象
+			//$("#activityFile")[0].files[0]：获取上传的文件
+			//$("#activityFile")[0].files[0].size：获取上传的文件的大小
+			let activityFile = $("#activityFile")[0].files[0];
+			let activityFileSize = activityFile.size;  //文件大小：6144
+			if(activityFileSize > (1024*1024*5)){
+				alert("文件太大，文件不能超过5M")
+				return;
+			}
+			//FormData是ajax提供的接口，可以模拟键值对向后台提交参数
+			//FormData最大的优势是不但能提交文本数据，还能提交二进制数据
+			let formData = new FormData()
+			formData.append("activityFile",activityFile);
+			$.ajax({
+				url: "workbench/activity/importActivityForFile",
+				data: formData,
+				processData: false,  //FormData对象不需要转换成参数字符串
+				contentType: false,   //在请求服务器时，数据有非字符串格式的内容（文件是二进制）
+				dataType: 'json',
+				type: "post",
+				success: function (data){
+					if(data.code=0){
+						alert(data.message)
+					}else{
+						alert(data.message);
+						//关闭模态窗口
+						$("#importActivityModal").modal("hide");
+						//刷新列表数据
+						selectActivityByConditionForPage(1,$("#pagination_Div").bs_pagination("getOption", "rowsPerPage"));
+					}
+				}
+			})
+		})
+
 	});
 
 	//封装函数
@@ -363,7 +428,7 @@
 				$.each(data.queryActivityList, function (index, obj) {
 					htmlStr+='<tr class="active">'
 					htmlStr+='	<td><input type="checkbox" value='+ obj.id +'></td>'
-					htmlStr+='	<td><a style="text-decoration: none; cursor: pointer;" onclick="window.location.href=\'detail.html\';">'+ obj.name +'</a></td>'
+					htmlStr+='	<td><a style="text-decoration: none; cursor: pointer;" onclick="window.location.href=\'workbench/activity/toDetail?id='+obj.id+ '\'">' + obj.name + '</a></td>'
 					htmlStr+='	<td>'+ obj.owner +'</td>'
 					htmlStr+='	<td>'+ obj.start_date+'</td>'
 					htmlStr+='	<td>'+ obj.end_date +'</td>'
@@ -601,7 +666,7 @@
 				  <button type="button" class="btn btn-danger" id="deleteBtn"><span class="glyphicon glyphicon-minus"></span> 删除</button>
 				</div>
 				<div class="btn-group" style="position: relative; top: 18%;">
-                    <button type="button" class="btn btn-default" data-toggle="modal" data-target="#importActivityModal" ><span class="glyphicon glyphicon-import"></span> 上传列表数据（导入）</button>
+                    <button type="button" class="btn btn-default" id="uploadActivityBtn" ><span class="glyphicon glyphicon-import"></span> 上传列表数据（导入）</button>
                     <button id="exportActivityAllBtn" type="button" class="btn btn-default"><span class="glyphicon glyphicon-export"></span> 下载列表数据（批量导出）</button>
                     <button id="exportActivityXzBtn" type="button" class="btn btn-default"><span class="glyphicon glyphicon-export"></span> 下载列表数据（选择导出）</button>
                 </div>
@@ -621,7 +686,7 @@
 <%--						<c:forEach items="${Activities}" var="activity">--%>
 <%--							<tr class="active">--%>
 <%--								<td><input type="checkbox" value="${activity.id}"/></td>--%>
-<%--								<td><a style="text-decoration: none; cursor: pointer;" onclick="window.location.href='detail.html';">发传单</a></td>--%>
+<%--								<td><a style="text-decoration: none; cursor: pointer;" onclick="window.location.href='detail.jsp';">发传单</a></td>--%>
 <%--								&lt;%&ndash;所有者，此时tbl_activity表中存储的是所有者的id&ndash;%&gt;--%>
 <%--								<td>${activity.owner}</td>--%>
 <%--								<td>${activity.start_date}</td>--%>

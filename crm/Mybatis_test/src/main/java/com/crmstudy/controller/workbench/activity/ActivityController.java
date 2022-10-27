@@ -3,11 +3,11 @@ package com.crmstudy.controller.workbench.activity;
 import com.crmstudy.commons.constans.Constant;
 import com.crmstudy.commons.domain.returnObject;
 import com.crmstudy.commons.utills.DateUtils;
+import com.crmstudy.commons.utills.ExportUtils;
 import com.crmstudy.commons.utills.UUIDUtils;
 import com.crmstudy.domain.Activity;
 import com.crmstudy.domain.User;
 import com.crmstudy.service.workbench.activity.ActivityService;
-import org.apache.ibatis.annotations.Param;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -17,15 +17,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import com.crmstudy.service.settings.qx.user.UserService;
 import org.springframework.web.bind.annotation.ResponseBody;
-
-import javax.servlet.ServletOutputStream;
+import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.beans.PropertyDescriptor;
-import java.io.*;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 @Controller
@@ -190,106 +189,137 @@ public class ActivityController {
         return returnObject;
     }
 
+    /**
+     * 查看数据详情
+     * @return
+     */
     @RequestMapping("/workbench/activity/toDetail")
-    public String toDetail(){
+    public String toDetail(String[] id, HttpServletRequest request){
+        System.out.println("toDetail接受的参数 : " + id[0]);
+        List<Activity> list = activityService.findAllActivityById(id);
+        request.setAttribute("ActivityDetail",list);
         return "workbench/activity/detail";
     }
 
+    /**
+     * 批量导出市场活动
+     * @param response
+     * @throws Exception
+     */
     @RequestMapping("/workbench/activity/exportFindAllActivity")
-    public void exportFindAllActivity(HttpServletResponse response) throws Exception{
-        /**
-         * 读取数据库中的数据，新建Excel存储查询的数据。将Excel表存储都服务器中
-         */
+    public void exportFindAllActivity(HttpServletResponse response){
         List<Activity> list = activityService.findAllActivity();
-        //使用apache的poi来操作Excel
-        //创建一个Excel文档wb
-        HSSFWorkbook wb = new HSSFWorkbook();
-        //在文档wb创建一个名为”所有市场活动“的Excel表sheet
-        HSSFSheet sheet = wb.createSheet("所有市场活动");
-        //活动List集合的迭代器
-        Iterator<Activity> iterator = list.iterator();
-        int i = 0;
-        //获取Activity的class类
-        Class<Activity> activityClass = Activity.class;
-        //反射获取Activity中所有的属性
-        Field[] declaredFields = activityClass.getDeclaredFields();
-        //在表sheet中新建第一行row
-        HSSFRow row = sheet.createRow(i);
-        int indexCellNo = 0;
-        //遍历所有的属性数组
-        for (Field declaredField : declaredFields) {
-            //属性都是私有的，暴力发射
-            declaredField.setAccessible(true);
-            //获取Activity类的所有属性名称
-            String name = declaredField.getName();
-            //在行row中创建列
-            HSSFCell cell = row.createCell(indexCellNo++);
-            //将属性名存到列中
-            cell.setCellValue(name);
-        }
-        while(iterator.hasNext()){
-            int j = 0;
-            row = sheet.createRow(++i);
-            Object next = iterator.next();
-            for (Field declaredField : declaredFields) {
-                HSSFCell cell = row.createCell(j++);
-                PropertyDescriptor p = new PropertyDescriptor(declaredField.getName(), activityClass);
-                Method readMethod = p.getReadMethod();
-                if (readMethod.invoke(next)==null){
-                    cell.setCellValue("null");
-                }else{
-                    cell.setCellValue(readMethod.invoke(next).toString());
-                }
-            }
-        }
-        //根据wb生成名称为activityList的Excel文件
-        //写入磁盘效率太低下
-//        OutputStream outputStream = new FileOutputStream("E:\\Java\\crm-project\\crmHaveExcel\\activityList.xls");
-//        wb.write(outputStream);
-        //关闭资源
-//        outputStream.close();
-//        wb.close();
-
-        /**
-         * 从服务器中返回Excel表
-         */
-        //设置响应类型和编码格式
-        //application/octet-stream：表示响应的文件是二进制流，charset=UTF_8：表示编码格式是UTF-8
-        response.setContentType("application/octet-stream;charset=UTF-8");
-        //输出流
-        OutputStream outputStream = response.getOutputStream();
-        //读取文件
-//        File file = new File("E:\\Java\\crm-project\\crmHaveExcel\\activityList.xls");
-//        //判读文件是否存在
-//        if (!(file.exists())) {
-//            throw new Exception("文件不存在");
-//        }
-//        InputStream inputStream = new FileInputStream(file);
-//        //设置缓冲区
-//        byte[] buff = new byte[1024];
-//        //默认是一个字节一个字节的读，效率太低，设置缓冲区可以一次读取你设置缓冲区大小的字节
-//        int len = 0;
-//        //判断什么时候读完文件
-//        //当文件读取完毕后会返回-1，只要没返回-1就代表文件还没有读取完毕
-//        while((len = inputStream.read(buff)) != -1){
-//            //将读取到的字节写入输出流，写入的字节长度是每次读取的字节长度read
-//            outputStream.write(buff,0,len);
-//        }
-//        //关闭资源（谁创建的谁关闭）
-//        inputStream.close();
-
-        //刷新输出流
-//        outputStream.flush();
-        //设置响应头
-        //Content-Disposition的作用：告知浏览器以何种方式显示响应返回的文件，用浏览器打开还是以附件的形式下载到本地保存
-        //attachment表示以附件方式下载 inline表示在线打开 "Content-Disposition: inline; filename=文件名.mp3"
-        // filename表示文件的默认名称，因为网络传输只支持URL编码的相关支付，因此需要将文件名URL编码后进行传输,前端收到后需要反编码才能获取到真正的名称
-        response.addHeader("Content-Disposition","attachment;filename=activityList.xls");
-        wb.write(outputStream);
-
-        wb.close();
-        outputStream.flush();
+        ExportUtils.ExportActivity(list, new Activity(), response);
     }
 
+    /**
+     * 选择导出市场活动
+     * @param id
+     * @param response
+     * @throws Exception
+     */
+    @RequestMapping("/workbench/activity/exportFindActivityById")
+    public void exportFindActivityById(String[] id, HttpServletResponse response) {
+        //返回根据id查询到的结果
+        List<Activity> list = activityService.findAllActivityById(id);
+        System.out.println("根据id查询出来的Activity: " + list);
+        ExportUtils.ExportActivity(list, new Activity(), response);
+    }
+
+    /**
+     * 批量上传数据
+     * @param activityFile  前端发送的file文件的一切信息都被springMVC封装进MultipartFile这个类中
+     */
+    @RequestMapping("/workbench/activity/importActivityForFile")
+    @ResponseBody
+    public Object importActivityForFile(MultipartFile activityFile, HttpSession session) {
+        //从session中获取登录的时候存储到服务器的用户
+        User user = (User)session.getAttribute(Constant.SESSION_USER);
+        returnObject returnObj = new returnObject();
+        try{
+            //把Excel文件写到磁盘目录中
+            //获取原始文件的名称
+            String originalFilename = activityFile.getOriginalFilename();
+            File file = new File("E:\\Java\\crm-project\\crmServiceExcel",originalFilename);
+            //将前端上传的文件转移至E:\Java\crm-project\crmServiceExcel文件夹中
+            activityFile.transferTo(file);
+
+            //解析Excel文件，将文件中的数据读取到并封装到List<Activity>集合中
+            //读取服务器端的Excel文件
+            InputStream inputStream = new FileInputStream("E:\\Java\\crm-project\\crmServiceExcel\\" + originalFilename);
+            //根据读取到的Excel文件生成对应的HSSFWorkbook类对象，封装了Excel文件的所有信息
+            HSSFWorkbook wb = new HSSFWorkbook(inputStream);
+            //根据下标索引获取Excel文件的表
+            HSSFSheet sheet = wb.getSheetAt(0);
+            HSSFRow row = null;
+            HSSFCell cell = null;
+            String value = "";
+            List<Activity> list = new ArrayList<>();
+            //判断Excel是不是空表，表中最后一行的索引为0时，表中没有数据
+            if(sheet.getLastRowNum()==0){
+                returnObj.setCode(Constant.RETURN_OBJECT_CODE_FAIL);
+                returnObj.setMessage("导入失败，可能您的表格中没有数据");
+                //如果是空表，就不进行下面操作，直接返回
+                return returnObj;
+            }
+            //遍历表中的每一行，第一行是字段名称不用读取，从第二行开始读取数据
+            //sheet.getLastRowNum() 获取表中最后一行的索引
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                row = sheet.getRow(i);
+                //每一行都封装进一个Activity对象中
+                Activity activity = new Activity();
+                activity.setId(UUIDUtils.getUUID());
+                activity.setOwner(user.getId());
+                activity.setCreate_time(DateUtils.formatDateTime(new Date()));
+                activity.setCreate_by(user.getId());
+                //遍历行中每一列
+                //row.getLastCellNum()  获取行中最后一列的索引+1
+                for (int j = 0; j < row.getLastCellNum(); j++) {
+                    //获取行中的列
+                    cell = row.getCell(j);
+                    //获取列中的数据
+                    if(cell.getCellType() == HSSFCell.CELL_TYPE_STRING){
+                        value = cell.getStringCellValue();
+                    }else if(cell.getCellType() == HSSFCell.CELL_TYPE_NUMERIC){
+                        value = cell.getNumericCellValue()+"";
+                    }else if(cell.getCellType() == HSSFCell.CELL_TYPE_BOOLEAN){
+                        value = cell.getBooleanCellValue()+"";
+                    }else if(cell.getCellType() == HSSFCell.CELL_TYPE_FORMULA){
+                        value = cell.getDateCellValue()+"";
+                    }else {
+                        value = "";
+                    }
+                    switch (j){
+                        case 0: activity.setName(value);
+                        case 1: activity.setStart_date(value);
+                        case 2: activity.setEnd_date(value);
+                        case 3: activity.setCost(value);
+                        case 4: activity.setDescription(value);
+                    }
+                }
+                //每一列的数据都封装到Activity后，将Activity放到List集合中
+                list.add(activity);
+            }
+            int i = activityService.insertActivityByList(list);
+            System.out.println("导入的返回结果是：" + i);
+            //当上传的Excel为空表时，影响的条数为0。数据存储失败，影响的条数为0。数据存储成功，影响的条数大于0
+            if(i>=1){
+                returnObj.setCode(Constant.RETURN_OBJECT_CODE_SUCCESS);
+                returnObj.setMessage("导入成功，导入"+ i +"条数据");
+            }else{
+                returnObj.setCode(Constant.RETURN_OBJECT_CODE_FAIL);
+                returnObj.setMessage("系统忙，请稍后重试.....");
+            }
+
+            //关闭资源
+            inputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            returnObj.setCode(Constant.RETURN_OBJECT_CODE_FAIL);
+            returnObj.setMessage("系统忙，请稍后重试.....");
+        }
+
+        return returnObj;
+    }
 
 }

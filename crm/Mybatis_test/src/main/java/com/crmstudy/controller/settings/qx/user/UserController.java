@@ -29,12 +29,24 @@ public class UserController {
         return "settings/qx/user/login";
     }
 
+    /**
+     * 用户登录
+     * @param loginAct
+     * @param loginPwd
+     * @param isRemPwd
+     * @param request
+     * @param response
+     * @param session
+     * @return
+     */
     @RequestMapping("/settings/qx/user/toIndex")
     @ResponseBody
     public Object toIndex(String loginAct, String loginPwd, String isRemPwd, HttpServletRequest request, HttpServletResponse response, HttpSession session){
         Map<String,Object> map = new HashMap();
         map.put("loginAct",loginAct);
         map.put("loginPwd",loginPwd);
+
+        //当前登录的用户
         User user = service.SelectUserByActNameAndActPwd(map);
 
         returnObject returnObj = new returnObject();
@@ -80,6 +92,12 @@ public class UserController {
         return returnObj;
     }
 
+    /**
+     * 安全退出功能
+     * @param response
+     * @param session
+     * @return
+     */
     @RequestMapping("/settings/qx/user/logout")
     public String logout(HttpServletResponse response, HttpSession session){
         //清空cookie和session

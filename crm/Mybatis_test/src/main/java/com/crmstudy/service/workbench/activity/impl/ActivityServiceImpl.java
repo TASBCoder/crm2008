@@ -5,6 +5,9 @@ import com.crmstudy.mapper.workbench.activity.ActivityMapper;
 import com.crmstudy.service.workbench.activity.ActivityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.Map;
 import java.util.List;
 
@@ -47,5 +50,15 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public List<Activity> findAllActivity() {
         return mapper.findAllActivity();
+    }
+
+    @Override
+    public List<Activity> findAllActivityById(String[] id) {
+        return mapper.findAllActivityById(id);
+    }
+
+    @Override
+    public int insertActivityByList(List<Activity> list) {
+        return mapper.insertActivityByList(list);
     }
 }
